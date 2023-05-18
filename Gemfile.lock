@@ -4,6 +4,11 @@ PATH
     nina (0.1.0)
 
 GEM
+  remote: http://127.0.0.1:9292/
+  specs:
+    toritori (0.1.0)
+
+GEM
   remote: https://rubygems.org/
   specs:
     ast (2.4.2)
@@ -55,6 +60,7 @@ DEPENDENCIES
   rspec (~> 3.0)
   rspec_vars_helper (~> 0.1)
   rubocop
+  toritori!
 
 BUNDLED WITH
    2.4.7

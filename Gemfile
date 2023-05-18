@@ -2,6 +2,10 @@
 
 source "https://rubygems.org"
 
+source 'http://127.0.0.1:9292/' do
+  gem 'toritori'
+end
+
 # Specify your gem's dependencies in nina.gemspec
 gemspec
 
