@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
 source 'http://127.0.0.1:9292/' do
   gem 'toritori'

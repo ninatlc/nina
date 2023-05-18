@@ -10,7 +10,7 @@ B = Struct.new(:b)
 C = Struct.new(:c)
 
 RSpec.describe Nina do
-  it "has a version number" do
+  it 'has a version number' do
     expect(Nina::VERSION).not_to be nil
   end
 

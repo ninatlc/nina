@@ -1,9 +1,10 @@
 # frozen_string_literal: true
+
 require 'toritori'
 require 'nina/builder'
 require 'nina/factory'
 
-require_relative "nina/version"
+require_relative 'nina/version'
 
 module Nina
   class Error < StandardError; end
