@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'toritori'
+require 'nina/assembler'
 require 'nina/builder'
-require 'nina/factory'
 
 require_relative 'nina/version'
 
@@ -10,18 +10,25 @@ module Nina
   class Error < StandardError; end
 
   module ClassMethods
-    def queues
-      @queues ||= {}
+    def builders
+      @builders ||= {}
     end
 
-    def queue(name, produces: Class.new, &block)
-      queues[name] = Nina::Factory.new(name, base_class: produces, &block)
-      define_singleton_method(:"#{name}_queue") { queues[name] }
+    def builders=(other)
+      @builders = other
     end
-  end
 
-  def self.default_init
-    @default_init ||= ->(*args, **kwargs, &block) { new(*args, **kwargs, &block) }
+    def builder(name, produces: Class.new, &block)
+      builders[name] = Nina::Builder.new(name, abstract_factory: produces, &block)
+      define_singleton_method(:"#{name}_builder") { builders[name] }
+    end
+
+    def inherited(subclass)
+      super
+      subclass.builders = builders.transform_values do |builder|
+        Nina::Builder.copy(builder)
+      end
+    end
   end
 
   def self.included(receiver)

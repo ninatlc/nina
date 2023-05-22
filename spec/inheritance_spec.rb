@@ -9,38 +9,47 @@ class InheritParams
     @data = data
   end
 end
+InheritQuery = Class.new
+InheritCommand = Class.new
+BBB = Class.new
 
 RSpec.describe Nina do
   vars do
     abstract_factory do
       Class.new do
-        include Toritori
+        include Nina
 
-        factory :params, produces: InheritParams do |data|
-          create(data: data)
-        end
+        builder :main, produces: BBB do
+          factory :params, produces: InheritParams do |data|
+            create(data: data)
+          end
+          factory :query, produces: InheritQuery
+          factory :command, produces: InheritCommand
 
-        params_factory.subclass do
-          def get
-            @data + 5
+          params_factory.subclass do
+            def get
+              @data + 5
+            end
           end
         end
       end
     end
-    child_factory do
+    child_abstract_factory do
       Class.new(abstract_factory) do
-        params_factory.subclass.init do |data, var|
-          new(data, var)
-        end
-
-        params_factory.subclass do
-          def initialize(data, var)
-            @data = data
-            @var = var
+        main_builder.subclass do
+          params_factory.subclass.init do |data, var|
+            new(data, var)
           end
 
-          def get
-            super + @var
+          params_factory.subclass do
+            def initialize(data, var)
+              @data = data
+              @var = var
+            end
+
+            def get
+              super + @var
+            end
           end
         end
       end
@@ -49,17 +58,18 @@ RSpec.describe Nina do
 
   describe 'concrete factory' do
     it 'handles classes' do
-      expect(child_factory).to respond_to :params_factory
-      factory = child_factory.params_factory
-      expect(factory).to be_a Toritori::Factory
-      # expect(factory.base_class).to eq InheritParams
-      expect(factory.base_class <= InheritParams).to be_truthy
+      expect(child_abstract_factory).to respond_to :main_builder
+      builder = child_abstract_factory.main_builder
+      expect(builder).to be_a Nina::Builder
+      expect(builder.abstract_factory.list).to eq %i[params query command]
     end
 
     it 'simply creates instances' do
-      factory = child_factory.params_factory
-      expect { factory.create }.to raise_error ArgumentError
-      instance = factory.create(2, 9)
+      builder = child_abstract_factory.main_builder
+      expect { builder.nest }.to raise_error ArgumentError
+      instance = builder.wrap do |b|
+        b.params(2, 9)
+      end
       expect(instance.class.superclass.superclass).to eq InheritParams
       expect(instance.get).to eq 16
     end

@@ -3,7 +3,6 @@
 Params = Class.new
 Query = Class.new
 Command = Class.new
-BQ = Class.new
 
 A = Struct.new(:a)
 B = Struct.new(:b)
@@ -19,13 +18,13 @@ RSpec.describe Nina do
       Class.new do
         include Nina
 
-        queue :main do
+        builder :main do
           factory :params, produces: Params
           factory :query, produces: Query
           factory :command, produces: Command
         end
 
-        queue :secondary do
+        builder :secondary do
           factory :params, produces: A
           factory :query, produces: B
           factory :command, produces: C
@@ -33,14 +32,14 @@ RSpec.describe Nina do
           params_factory.subclass do
             attr_reader :only
 
-            def initialize(a, only:, &block)
-              super(a)
+            def initialize(var, only:, &block)
+              super(var)
               @only = only
               @block = block
             end
 
-            def call(a)
-              @block.call(a)
+            def call(var)
+              @block.call(var)
             end
           end
         end
@@ -48,17 +47,17 @@ RSpec.describe Nina do
     end
   end
 
-  describe 'concrete factory' do
+  describe 'build using wrapping strategy' do
     it 'handles classes' do
-      expect(abstract_factory).to respond_to :main_queue
-      factory = abstract_factory.main_queue
-      expect(factory).to be_a Nina::Factory
-      expect(factory.base_class.list).to eq %i[params query command]
+      expect(abstract_factory).to respond_to :main_builder
+      builder = abstract_factory.main_builder
+      expect(builder).to be_a Nina::Builder
+      expect(builder.abstract_factory.list).to eq %i[params query command]
     end
 
     it 'simply creates instances' do
-      factory = abstract_factory.main_queue
-      instance = factory.create
+      builder = abstract_factory.main_builder
+      instance = builder.wrap
       expect(instance).to be_a Command
       expect(instance.query).to be_a Query
       expect(instance.params).to be_a Params
@@ -66,8 +65,8 @@ RSpec.describe Nina do
     end
 
     it 'creates instances with custom init' do
-      factory = abstract_factory.secondary_queue
-      instance = factory.create do |b|
+      builder = abstract_factory.secondary_builder
+      instance = builder.wrap do |b|
         b.params(1, only: :me) { |v| v * 2 }
         b.query(2)
         b.command(3)
@@ -80,6 +79,41 @@ RSpec.describe Nina do
       expect(instance.c).to eq 3
       expect(instance.only).to eq :me
       expect(instance.params.call(3)).to eq 6
+    end
+  end
+
+  describe 'build using nesting strategy' do
+    it 'handles classes' do
+      expect(abstract_factory).to respond_to :main_builder
+      builder = abstract_factory.main_builder
+      expect(builder).to be_a Nina::Builder
+      expect(builder.abstract_factory.list).to eq %i[params query command]
+    end
+
+    it 'simply creates instances' do
+      builder = abstract_factory.main_builder
+      instance = builder.nest
+      expect(instance).to be_a Params
+      expect(instance.query).to be_a Query
+      expect(instance.command).to be_a Command
+      expect(instance.command).to eq instance.query.command
+    end
+
+    it 'creates instances with custom init' do
+      builder = abstract_factory.secondary_builder
+      instance = builder.nest do |b|
+        b.params(1, only: :me) { |v| v * 2 }
+        b.query(2)
+        b.command(3)
+      end
+      expect(instance.a).to eq 1
+      expect(instance.query.b).to eq 2
+      expect(instance.c).to eq 3
+      expect(instance.a).to eq 1
+      expect(instance.b).to eq 2
+      expect(instance.query.command.c).to eq 3
+      expect(instance.only).to eq :me
+      expect(instance.call(3)).to eq 6
     end
   end
 end
