@@ -31,21 +31,21 @@ module Nina
     end
 
     module ClassMethods
-      def list
-        @list ||= []
+      def build_order_list
+        @build_order_list ||= []
       end
 
-      def list=(other)
-        @list = other.dup
+      def build_order_list=(other)
+        @build_order_list = other.dup.freeze
       end
 
       def inherited(subclass)
         super
-        subclass.list = list
+        subclass.build_order_list = build_order_list.dup.freeze
       end
 
       def factory(name, *args, **kwargs, &block)
-        list << name
+        build_order_list << name
         super
       end
     end
