@@ -71,8 +71,8 @@ RSpec.describe Nina do
       instance = builder.wrap do |b|
         b.params(2, 9)
       end
-      expect(instance.class.superclass.superclass).to eq InheritParams
-      expect(instance.get).to eq 16
+      expect(instance.query.params.class.superclass.superclass).to eq InheritParams
+      expect(instance.query.params.get).to eq 16
     end
   end
 end
