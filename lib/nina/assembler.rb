@@ -21,8 +21,8 @@ module Nina
       on.extend(MethodMissingDelegation) if delegate
     end
 
-    def initialize(blueprint)
-      @blueprint = blueprint
+    def initialize(abstract_factory)
+      @abstract_factory = abstract_factory
     end
 
     def inject(initialization = {}, delegate: false)
@@ -38,10 +38,10 @@ module Nina
     private
 
     def create_object(name, initialization = {})
-      return @blueprint.send("#{name}_factory").create if initialization[name].nil?
+      return @abstract_factory.send("#{name}_factory").create if initialization[name].nil?
 
       args, kwargs, block = initialization[name]
-      @blueprint.send("#{name}_factory").create(*args, **kwargs, &block)
+      @abstract_factory.send("#{name}_factory").create(*args, **kwargs, &block)
     end
   end
 end
