@@ -25,12 +25,12 @@ module Nina
       @blueprint = blueprint
     end
 
-    def inject(initialization = {})
+    def inject(initialization = {}, delegate: false)
       @blueprint.list.each.with_index(-1).inject(nil) do |prev, (name, idx)|
         object = create_object(name, initialization)
         next object if prev.nil?
 
-        self.class.def_accessor(@blueprint.list[idx], on: object, to: prev, delegate: true)
+        self.class.def_accessor(@blueprint.list[idx], on: object, to: prev, delegate: delegate)
         object
       end
     end

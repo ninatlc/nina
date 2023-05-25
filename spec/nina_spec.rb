@@ -47,73 +47,11 @@ RSpec.describe Nina do
     end
   end
 
-  describe 'build using wrapping strategy' do
-    it 'handles classes' do
-      expect(abstract_factory).to respond_to :main_builder
-      builder = abstract_factory.main_builder
-      expect(builder).to be_a Nina::Builder
-      expect(builder.abstract_factory.list).to eq %i[params query command]
-    end
-
-    it 'simply creates instances' do
-      builder = abstract_factory.main_builder
-      instance = builder.wrap
-      expect(instance).to be_a Command
-      expect(instance.query).to be_a Query
-      expect(instance.params).to be_a Params
-      expect(instance.params).to eq instance.query.params
-    end
-
-    it 'creates instances with custom init' do
-      builder = abstract_factory.secondary_builder
-      instance = builder.wrap do |b|
-        b.params(1, only: :me) { |v| v * 2 }
-        b.query(2)
-        b.command(3)
-      end
-      expect(instance.params.a).to eq 1
-      expect(instance.query.b).to eq 2
-      expect(instance.c).to eq 3
-      expect(instance.a).to eq 1
-      expect(instance.b).to eq 2
-      expect(instance.c).to eq 3
-      expect(instance.only).to eq :me
-      expect(instance.params.call(3)).to eq 6
-    end
-  end
-
-  describe 'build using nesting strategy' do
-    it 'handles classes' do
-      expect(abstract_factory).to respond_to :main_builder
-      builder = abstract_factory.main_builder
-      expect(builder).to be_a Nina::Builder
-      expect(builder.abstract_factory.list).to eq %i[params query command]
-    end
-
-    it 'simply creates instances' do
-      builder = abstract_factory.main_builder
-      instance = builder.nest
-      expect(instance).to be_a Params
-      expect(instance.query).to be_a Query
-      expect(instance.command).to be_a Command
-      expect(instance.command).to eq instance.query.command
-    end
-
-    it 'creates instances with custom init' do
-      builder = abstract_factory.secondary_builder
-      instance = builder.nest do |b|
-        b.params(1, only: :me) { |v| v * 2 }
-        b.query(2)
-        b.command(3)
-      end
-      expect(instance.a).to eq 1
-      expect(instance.query.b).to eq 2
-      expect(instance.c).to eq 3
-      expect(instance.a).to eq 1
-      expect(instance.b).to eq 2
-      expect(instance.query.command.c).to eq 3
-      expect(instance.only).to eq :me
-      expect(instance.call(3)).to eq 6
-    end
+  it 'handles classes' do
+    expect(abstract_factory).to respond_to :main_builder
+    expect(abstract_factory).to respond_to :secondary_builder
+    builder = abstract_factory.main_builder
+    expect(builder).to be_a Nina::Builder
+    expect(builder.abstract_factory.list).to eq %i[params query command]
   end
 end

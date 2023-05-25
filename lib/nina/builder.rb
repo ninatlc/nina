@@ -62,17 +62,17 @@ module Nina
       @builder = Assembler.new(@abstract_factory)
     end
 
-    def wrap(&block)
+    def wrap(delegate: false, &block)
       yield initialization = Initialization.new(@abstract_factory.factories.keys) if block
 
-      @builder.inject(initialization.to_h)
+      @builder.inject(initialization.to_h, delegate: delegate)
     end
 
-    def nest(&block)
+    def nest(delegate: false, &block)
       yield initialization = Initialization.new(@abstract_factory.factories.keys) if block
 
       @abstract_factory.list.reverse!
-      @builder.inject(initialization.to_h)
+      @builder.inject(initialization.to_h, delegate: delegate)
     end
 
     def subclass(&def_block)
