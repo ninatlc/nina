@@ -25,12 +25,12 @@ module Nina
       @abstract_factory = abstract_factory
     end
 
-    def inject(initialization = {}, delegate: false)
-      @blueprint.list.each.with_index(-1).inject(nil) do |prev, (name, idx)|
+    def inject(build_order, initialization = {}, delegate: false)
+      build_order.each.with_index(-1).inject(nil) do |prev, (name, idx)|
         object = create_object(name, initialization)
         next object if prev.nil?
 
-        self.class.def_accessor(@blueprint.list[idx], on: object, to: prev, delegate: delegate)
+        self.class.def_accessor(build_order[idx], on: object, to: prev, delegate: delegate)
         object
       end
     end

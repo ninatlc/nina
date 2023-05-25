@@ -59,20 +59,29 @@ module Nina
       @def_block = def_block
       @abstract_factory = abstract_factory.include(Toritori).extend(ClassMethods)
       @abstract_factory.class_eval(&def_block) if def_block
-      @builder = Assembler.new(@abstract_factory)
+      @abstract_factory.build_order_list.freeze
+      @initialization = Initialization.new(@abstract_factory.factories.keys)
+      @assembler = Assembler.new(@abstract_factory)
     end
 
     def wrap(delegate: false, &block)
-      yield initialization = Initialization.new(@abstract_factory.factories.keys) if block
+      yield @initialization if block
 
-      @builder.inject(initialization.to_h, delegate: delegate)
+      @assembler.inject(
+        @abstract_factory.build_order_list,
+        @initialization.to_h,
+        delegate: delegate
+      )
     end
 
     def nest(delegate: false, &block)
-      yield initialization = Initialization.new(@abstract_factory.factories.keys) if block
+      yield @initialization if block
 
-      @abstract_factory.list.reverse!
-      @builder.inject(initialization.to_h, delegate: delegate)
+      @assembler.inject(
+        @abstract_factory.build_order_list.reverse,
+        @initialization.to_h,
+        delegate: delegate
+      )
     end
 
     def subclass(&def_block)
@@ -80,7 +89,9 @@ module Nina
 
       @abstract_factory = Class.new(abstract_factory)
       @abstract_factory.class_eval(&def_block)
-      @builder = Assembler.new(@abstract_factory)
+      @abstract_factory.build_order_list.freeze
+      @initialization = Initialization.new(@abstract_factory.factories.keys)
+      @assembler = Assembler.new(@abstract_factory)
     end
   end
 end
