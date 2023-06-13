@@ -1,6 +1,10 @@
+# frozen_string_literal: true
+
 module Nina
   # Generates module that adds support for objects creation
   class Assembler
+    NOOP_PROC = proc {}
+
     module MethodMissingDelegation
       def method_missing(name, *attrs, &block)
         return super unless methods.detect { |m| m == :__predecessor }
@@ -25,12 +29,11 @@ module Nina
       @abstract_factory = abstract_factory
     end
 
-    def inject(build_order, initialization = {}, delegate: false)
+    def inject(build_order, initialization = {}, callbacks: nil, delegate: false)
       build_order.each.with_index(-1).inject(nil) do |prev, (name, idx)|
         object = create_object(name, initialization)
-        next object if prev.nil?
-
-        self.class.def_accessor(build_order[idx], on: object, to: prev, delegate: delegate)
+        self.class.def_accessor(build_order[idx], on: object, to: prev, delegate: delegate) if prev
+        callbacks.to_h.fetch(name, NOOP_PROC)[object] if callbacks
         object
       end
     end

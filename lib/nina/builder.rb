@@ -8,6 +8,7 @@ module Nina
   # Generates module that adds support for objects creation
   class Builder
     attr_reader :name, :abstract_factory, :def_block
+    attr_accessor :callbacks
 
     class Initialization < BasicObject
       def initialize(list)
@@ -27,6 +28,15 @@ module Nina
 
       def to_h
         @atts
+      end
+    end
+
+    class Callbacks < Initialization
+      def method_missing(method, *args, **kwargs, &block)
+        return super unless @list.include?(method)
+
+        @atts[method] unless block
+        @atts[method] = block
       end
     end
 
@@ -52,6 +62,11 @@ module Nina
 
     def self.copy(builder)
       new(builder.name, abstract_factory: builder.abstract_factory)
+
+    def with_callbacks(&block)
+      yield c = Callbacks.new(abstract_factory.factories.keys) if block
+
+      self.class.new(name, abstract_factory: abstract_factory).tap { _1.callbacks = c }
     end
 
     def initialize(name, abstract_factory: nil, &def_block)
@@ -70,6 +85,7 @@ module Nina
       @assembler.inject(
         @abstract_factory.build_order_list,
         @initialization.to_h,
+        callbacks: callbacks,
         delegate: delegate
       )
     end
@@ -80,6 +96,7 @@ module Nina
       @assembler.inject(
         @abstract_factory.build_order_list.reverse,
         @initialization.to_h,
+        callbacks: callbacks,
         delegate: delegate
       )
     end
