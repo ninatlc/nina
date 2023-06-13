@@ -25,9 +25,7 @@ module Nina
 
     def inherited(subclass)
       super
-      subclass.builders = builders.transform_values do |builder|
-        Nina::Builder.copy(builder)
-      end
+      subclass.builders = builders.transform_values(&:copy)
     end
   end
 

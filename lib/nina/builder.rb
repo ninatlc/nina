@@ -60,8 +60,9 @@ module Nina
       end
     end
 
-    def self.copy(builder)
-      new(builder.name, abstract_factory: builder.abstract_factory)
+    def copy
+      self.class.new(name, abstract_factory: abstract_factory)
+    end
 
     def with_callbacks(&block)
       yield c = Callbacks.new(abstract_factory.factories.keys) if block
