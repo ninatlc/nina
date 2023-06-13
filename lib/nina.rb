@@ -18,8 +18,8 @@ module Nina
       @builders = other
     end
 
-    def builder(name, produces: Class.new, &block)
-      builders[name] = Nina::Builder.new(name, abstract_factory: Class.new(produces), &block)
+    def builder(name, &block)
+      builders[name] = Nina::Builder.new(name, abstract_factory: Class.new, &block)
       define_singleton_method(:"#{name}_builder") { builders[name] }
     end
 

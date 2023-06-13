@@ -19,7 +19,7 @@ RSpec.describe Nina do
       Class.new do
         include Nina
 
-        builder :main, produces: BBB do
+        builder :main do
           factory :params, produces: InheritParams do |data|
             create(data: data)
           end
