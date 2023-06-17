@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
-require "nina"
 require 'rspec_vars_helper'
 require 'pry'
 require 'simplecov'
 
-SimpleCov.start
+SimpleCov.start do
+  track_files 'lib/**/*.rb'
+end
+
+require "nina"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
