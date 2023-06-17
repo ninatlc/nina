@@ -3,23 +3,110 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/435ee6e0ae846e9deb88/maintainability)](https://codeclimate.com/github/andriy-baran/nina/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/435ee6e0ae846e9deb88/test_coverage)](https://codeclimate.com/github/andriy-baran/nina/test_coverage)
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/nina`. To experiment with that code, run `bin/console` for an interactive prompt.
+DSL for simplifying complex objects compositions. Also it reduce biolerplate code when you need to create complex OOD compositions. It's based on https://github.com/andriy-baran/toritori so please check it first
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_PRIOR_TO_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
-
 Install the gem and add to the application's Gemfile by executing:
 
-    $ bundle add UPDATE_WITH_YOUR_GEM_NAME_PRIOR_TO_RELEASE_TO_RUBYGEMS_ORG
+    $ bundle add nina
 
 If bundler is not being used to manage dependencies, install the gem by executing:
 
-    $ gem install UPDATE_WITH_YOUR_GEM_NAME_PRIOR_TO_RELEASE_TO_RUBYGEMS_ORG
+    $ gem install nina
 
 ## Usage
 
-TODO: Write usage instructions here
+Let's define two builders: main and secondary
+
+```ruby
+Params = Class.new
+Query = Class.new
+Command = Class.new
+
+A = Struct.new(:a)
+B = Struct.new(:b)
+C = Struct.new(:c)
+
+class Flow
+  include Nina
+
+  builder :main do
+    factory :params, produces: Params
+    factory :query, produces: Query
+    factory :command, produces: Command
+  end
+
+  builder :secondary do
+    factory :params, produces: A
+    factory :query, produces: B
+    factory :command, produces: C
+  end
+end
+```
+Each builder has three factories: params, query, and command. Please check https://github.com/andriy-baran/toritori for related documentation.
+
+With this setup we are able to compose objects in two different ways. Taking the definition block as an ordered list we can traverse it `top->bottom` or `bottom->top` connecting objects at each step
+
+Wrapping `top->bottom`
+```mermaid
+graph TD;
+  query-->params;
+  command-->query;
+```
+Nesting `bottom->top`
+```mermaid
+graph TD;
+  query-->command;
+  params-->query;
+```
+Lets explore what we have as a result
+```ruby
+# Wrapping strategy
+builder = abstract_factory.main_builder
+instance = builder.wrap
+instance # => #<Command>
+instance.query # => #<Query>
+instance.query.params # => #<Params>
+
+# Nesting strategy
+builder = abstract_factory.secondary_builder
+instance = builder.nest
+instance # => #<A>
+instance.query # => #<B>
+instance.query.command # => #<C>
+```
+We may apply delegation techique from OOD to hide deeper layers of resulted object
+```ruby
+builder = abstract_factory.secondary_builder
+instance = builder.nest(delegate: true)
+instance.a # => nil
+instance.b # => nil
+instance.c # => nil
+```
+If you need provide an initalization parameters for the objects
+```ruby
+instance = builder.wrap(delegate: true) do |b|
+  b.params(1)
+  b.query(2)
+  b.command(3)
+end
+instance.a # => 1
+instance.b # => 2
+instance.c # => 3
+instance.query.c # => 3
+```
+To do something between stages (after creation of object)
+```ruby
+instance = builder.wrap(delegate: true) do |b|
+  b.params { _1.a = 'a' }
+  b.query { _1.b = 'b' }
+  b.command { _1.c = 'c' }
+end
+instance.a # => 'a'
+instance.b # => 'b'
+instance.c # => 'c'
+```
 
 ## Development
 
