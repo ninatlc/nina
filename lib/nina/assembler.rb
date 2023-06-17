@@ -5,6 +5,7 @@ module Nina
   class Assembler
     NOOP_PROC = proc {}
 
+    # Adds ability to delegeate methods via method_missing
     module MethodMissingDelegation
       def method_missing(name, *attrs, &block)
         return super unless methods.detect { |m| m == :__predecessor }

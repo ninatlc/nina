@@ -10,6 +10,7 @@ module Nina
     attr_reader :name, :abstract_factory, :def_block
     attr_accessor :callbacks
 
+    # A way to call methods from initalization proc on base_class
     class Initialization < BasicObject
       def initialize(list)
         @list = list
@@ -31,6 +32,7 @@ module Nina
       end
     end
 
+    # Utility to get user defined callbacks
     class Callbacks < Initialization
       def method_missing(method, *args, **kwargs, &block)
         return super unless @list.include?(method)
@@ -40,6 +42,7 @@ module Nina
       end
     end
 
+    # Definaes support methods and variables for concrete builder
     module ClassMethods
       def build_order_list
         @build_order_list ||= []

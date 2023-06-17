@@ -6,9 +6,11 @@ require 'nina/builder'
 
 require_relative 'nina/version'
 
+# Module that provides DSL for builders
 module Nina
   class Error < StandardError; end
 
+  # Definaes support methods and variables
   module ClassMethods
     def builders
       @builders ||= {}
