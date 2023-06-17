@@ -23,5 +23,18 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
+    - name: Setup Code Climate test-reporter
+      run: |
+        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+        chmod +x ./cc-test-reporter
+        ./cc-test-reporter before-build
     - name: Run the default task
+      env:
+        CC_TEST_REPORTER_ID: 358500218b79ee16ee83a03923f70acfd29c7434b07575f23af10fb21779f2d8
       run: bundle exec rake
+    - name: Publish code coverage
+      run: |
+        export GIT_BRANCH="master"
+        pwd
+        ls -l coverage
+        ./cc-test-reporter after-build -d -t simplecov -r 358500218b79ee16ee83a03923f70acfd29c7434b07575f23af10fb21779f2d8
