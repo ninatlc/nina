@@ -25,7 +25,6 @@ RSpec.describe Nina do
       builder_with_callbacks = builder.with_callbacks do |c|
         c.params { _1.a = 1 }
         c.query { _1.b = 2 }
-        # c.command { _1.c = 3 }
       end
       instance = builder_with_callbacks.wrap do |b|
         b.command(3)
@@ -33,6 +32,22 @@ RSpec.describe Nina do
       expect(instance.query.params.a).to eq 1
       expect(instance.query.b).to eq 2
       expect(instance.c).to eq 3
+    end
+  end
+
+  context 'multiple callbacks' do
+    it 'aggregates callbacks' do
+      builder = abstract_factory.main_builder
+      builder_with_callbacks = builder.with_callbacks do |c|
+        c.params { _1.a = 1 }
+        c.params { _1.a += 3 }
+        c.params { _1.a += 2 }
+        c.query { _1.b = 2 }
+      end
+      instance = builder_with_callbacks.wrap
+      expect(instance.query.params.a).to eq 6
+      expect(instance.query.b).to eq 2
+      expect(instance.c).to eq nil
     end
   end
 end

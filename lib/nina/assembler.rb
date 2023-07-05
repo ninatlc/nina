@@ -3,8 +3,6 @@
 module Nina
   # Generates module that adds support for objects creation
   class Assembler
-    NOOP_PROC = proc {}
-
     # Adds ability to delegeate methods via method_missing
     module MethodMissingDelegation
       def method_missing(name, *attrs, &block)
@@ -34,7 +32,7 @@ module Nina
       build_order.each.with_index(-1).inject(nil) do |prev, (name, idx)|
         object = create_object(name, initialization)
         self.class.def_accessor(build_order[idx], on: object, to: prev, delegate: delegate) if prev
-        callbacks.to_h.fetch(name, NOOP_PROC)[object] if callbacks
+        callbacks.to_h.fetch(name, []).each { |c| c.call(object) } if callbacks
         object
       end
     end

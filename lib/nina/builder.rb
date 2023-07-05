@@ -38,7 +38,8 @@ module Nina
         return super unless @list.include?(method)
 
         @atts[method] unless block
-        @atts[method] = block
+        @atts[method] ||= []
+        @atts[method] << block
       end
     end
 
