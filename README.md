@@ -1,5 +1,6 @@
 # Nina
 
+[![Gem Version](https://badge.fury.io/rb/nina.svg)](https://badge.fury.io/rb/nina)
 [![Maintainability](https://api.codeclimate.com/v1/badges/435ee6e0ae846e9deb88/maintainability)](https://codeclimate.com/github/andriy-baran/nina/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/435ee6e0ae846e9deb88/test_coverage)](https://codeclimate.com/github/andriy-baran/nina/test_coverage)
 
@@ -83,6 +84,7 @@ instance = builder.nest(delegate: true)
 instance.a # => nil
 instance.b # => nil
 instance.c # => nil
+instance.query.c # => nil
 ```
 If you need provide an initalization parameters for the objects
 ```ruby
@@ -94,18 +96,19 @@ end
 instance.a # => 1
 instance.b # => 2
 instance.c # => 3
-instance.query.c # => 3
 ```
 To do something between stages (after creation of object)
 ```ruby
-instance = builder.wrap(delegate: true) do |b|
-  b.params { _1.a = 'a' }
-  b.query { _1.b = 'b' }
-  b.command { _1.c = 'c' }
+builder_with_callbacks = builder.with_callbacks do |c|
+  c.params { _1.a = 1 }
+  c.params { _1.a += 3 }
+  c.params { _1.a += 2 }
+  c.query { _1.b = 2 }
 end
-instance.a # => 'a'
-instance.b # => 'b'
-instance.c # => 'c'
+instance = builder_with_callbacks.wrap
+instance.query.params.a # => 6
+instance.query.b # => 2
+instance.c # => nil
 ```
 
 ## Development
