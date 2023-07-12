@@ -111,6 +111,18 @@ instance.query.b # => 2
 instance.c # => nil
 ```
 
+We are copying callbacks from builder if had some defined
+```ruby
+builder_with_callbacks = builder.with_callbacks do |c|
+  c.params { _1.a = 1 }
+end
+builder_with_callbacks_with_callbacks = builder_with_callbacks.with_callbacks do |c|
+  c.params { _1.a += 1 }
+end
+instance = builder_with_callbacks.wrap
+instance.a # => 2
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
