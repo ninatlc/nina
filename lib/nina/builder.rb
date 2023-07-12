@@ -7,24 +7,25 @@
 module Nina
   # Generates module that adds support for objects creation
   class Builder
-    attr_reader :name, :abstract_factory, :def_block
-    attr_accessor :callbacks
+    attr_reader :name, :abstract_factory, :def_block, :callbacks
 
     # A way to call methods from initalization proc on base_class
     class Initialization < BasicObject
-      def initialize(list)
-        @list = list
-        @atts = {}
+      attr_reader :allow_list
+
+      def initialize(allow_list, atts = {})
+        @allow_list = allow_list
+        @atts = atts
       end
 
       def method_missing(method, *args, **kwargs, &block)
-        return super unless @list.include?(method)
+        return super unless @allow_list.include?(method)
 
         @atts[method] = [args, kwargs, block]
       end
 
       def respond_to_missing?(method, include_private = false)
-        @list.include?(method) || super
+        @allow_list.include?(method) || super
       end
 
       def to_h
@@ -34,12 +35,20 @@ module Nina
 
     # Utility to get user defined callbacks
     class Callbacks < Initialization
+      def copy
+        Callbacks.new(@allow_list, to_h.dup)
+      end
+
       def method_missing(method, *args, **kwargs, &block)
-        return super unless @list.include?(method)
+        return super unless @allow_list.include?(method)
 
         @atts[method] unless block
         @atts[method] ||= []
         @atts[method] << block
+      end
+
+      def respond_to_missing?(method, include_private = false)
+        super
       end
     end
 
@@ -73,12 +82,13 @@ module Nina
     end
 
     def with_callbacks(&block)
-      yield c = Callbacks.new(abstract_factory.factories.keys) if block
+      c = callbacks&.copy || Callbacks.new(abstract_factory.factories.keys)
+      yield c if block
 
-      self.class.new(name, abstract_factory: abstract_factory).tap { _1.callbacks = c }
+      self.class.new(name, abstract_factory: abstract_factory, callbacks: c)
     end
 
-    def initialize(name, abstract_factory: nil, &def_block)
+    def initialize(name, abstract_factory: nil, callbacks: nil, &def_block)
       @name = name
       @def_block = def_block
       @abstract_factory = abstract_factory.include(Toritori).extend(ClassMethods)
@@ -86,6 +96,7 @@ module Nina
       @abstract_factory.build_order_list.freeze
       @initialization = Initialization.new(@abstract_factory.factories.keys)
       @assembler = Assembler.new(@abstract_factory)
+      @callbacks = callbacks
     end
 
     def wrap(delegate: false, &block)

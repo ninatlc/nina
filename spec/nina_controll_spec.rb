@@ -50,4 +50,19 @@ RSpec.describe Nina do
       expect(instance.c).to eq nil
     end
   end
+
+  context 'with_callbacks' do
+    it 'should be chainable' do
+      copied = nil
+      builder = abstract_factory.main_builder
+      builder = builder.with_callbacks do |c|
+        c.params { _1.a = 1 }
+      end
+      builder = builder.with_callbacks do |c|
+        c.params { copied = _1.a }
+      end
+      builder.wrap
+      expect(copied).to eq(1)
+    end
+  end
 end
