@@ -20,9 +20,7 @@ RSpec.describe Nina do
         include Nina
 
         builder :main do
-          factory :params, produces: InheritParams do |data|
-            create(data: data)
-          end
+          factory :params, produces: InheritParams, creation_method: :create
           factory :query, produces: InheritQuery
           factory :command, produces: InheritCommand
 
@@ -37,11 +35,7 @@ RSpec.describe Nina do
     child_abstract_factory do
       Class.new(abstract_factory) do
         main_builder.subclass do
-          params_factory.subclass.init do |data, var|
-            new(data, var)
-          end
-
-          params_factory.subclass do
+          params_factory.subclass(creation_method: :new) do
             def initialize(data, var)
               @data = data
               @var = var

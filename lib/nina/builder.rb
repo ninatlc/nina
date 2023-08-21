@@ -31,8 +31,7 @@ module Nina
         build_order_list << name
         super
         define_singleton_method(name) do |klass = nil, &definition|
-          factories[__method__].subclass.base_class(klass) if klass
-          factories[__method__].subclass(&definition) if definition
+          factories[__method__].subclass(produces: klass, &definition)
         end
       end
     end

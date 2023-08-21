@@ -40,10 +40,10 @@ module Nina
     private
 
     def create_object(name, initialization = {})
-      return @abstract_factory.send("#{name}_factory").create if initialization[name].nil?
+      return @abstract_factory.factories[name].create if initialization[name].nil?
 
       args, kwargs, block = initialization[name]
-      @abstract_factory.send("#{name}_factory").create(*args, **kwargs, &block)
+      @abstract_factory.factories[name].create(*args, **kwargs, &block)
     end
   end
 end

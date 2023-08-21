@@ -38,5 +38,5 @@ Gem::Specification.new do |spec|
   # guide at: https://bundler.io/guides/creating_gem.html
   # spec.metadata['rubygems_mfa_required'] = 'true'
 
-  spec.add_dependency 'toritori', '0.1.0'
+  spec.add_dependency 'toritori', '0.2.0'
 end
