@@ -64,7 +64,7 @@ module Nina
       @assembler.inject(
         @abstract_factory.build_order_list,
         @initialization.to_h,
-        callbacks: callbacks,
+        callbacks: callbacks.to_h,
         delegate: delegate
       )
     end
@@ -75,7 +75,7 @@ module Nina
       @assembler.inject(
         @abstract_factory.build_order_list.reverse,
         @initialization.to_h,
-        callbacks: callbacks,
+        callbacks: callbacks.to_h,
         delegate: delegate
       )
     end
