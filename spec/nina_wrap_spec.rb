@@ -64,12 +64,15 @@ RSpec.describe Nina do
         b.query(2)
         b.command(3)
       end
+      predecessors = instance.predecessors
       expect(instance.params.a).to eq 1
       expect(instance.query.b).to eq 2
       expect(instance.c).to eq 3
       expect(instance.a).to eq 1
       expect(instance.b).to eq 2
       expect(instance.c).to eq 3
+      expect(predecessors).to eq [instance.query, instance.params]
+      expect(predecessors.object_id).to eq instance.predecessors.object_id
       expect(instance.only).to eq :me
       expect(instance.params.call(3)).to eq 6
     end

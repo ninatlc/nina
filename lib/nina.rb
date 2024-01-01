@@ -34,15 +34,24 @@ module Nina
   # Adds ability to delegeate methods via method_missing
   module MethodMissingDelegation
     def method_missing(name, *attrs, **kwargs, &block)
-      return super unless methods.detect { |m| m == :__predecessor }
-
-      public_send(__predecessor).public_send(name, *attrs, **kwargs, &block)
+      if (prev = predecessors.detect { |o| o.public_methods.include?(name) })
+        prev.public_send(name, *attrs, **kwargs, &block)
+      else
+        super
+      end
     end
 
     def respond_to_missing?(method_name, _include_private = false)
-      return super unless methods.detect { |m| m == :__predecessor }
+      public_methods.detect { |m| m == :predecessor_name } || super
+    end
 
-      public_send(__predecessor).respond_to?(method_name)
+    def predecessors
+      @predecessors ||= begin
+        obj = self
+        [].tap do |list|
+          list << obj = obj.public_send(obj.predecessor_name) while obj.methods.detect { |m| m == :predecessor_name }
+        end
+      end
     end
   end
 
@@ -54,8 +63,8 @@ module Nina
     on.define_singleton_method(accessor) { to }
     return unless delegate
 
-    on.define_singleton_method(:__predecessor) { accessor }
-    on.extend(MethodMissingDelegation) if delegate
+    on.define_singleton_method(:predecessor_name) { accessor }
+    on.extend(MethodMissingDelegation)
   end
 
   def self.linked_list(build_config, delegate: false)
