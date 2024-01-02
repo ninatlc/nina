@@ -49,18 +49,15 @@ module Nina
     end
 
     def copy
-      new_builder = self.class.new(name, abstract_factory: abstract_factory)
+      new_builder = self.class.new(name, abstract_factory: abstract_factory, callbacks: @assembler.callbacks)
       @observers.each { |observer| new_builder.add_observer(observer) }
       new_builder
     end
 
     def with_callbacks(&block)
-      c = @assembler.callbacks
-      yield c if block
+      yield @assembler.callbacks if block
 
-      new_builder = self.class.new(name, abstract_factory: abstract_factory, callbacks: c)
-      @observers.each { |observer| new_builder.add_observer(observer) }
-      new_builder
+      copy
     end
 
     def wrap(delegate: false, &block)
