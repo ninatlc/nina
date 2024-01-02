@@ -42,9 +42,7 @@ module Nina
       @abstract_factory = abstract_factory.include(Toritori).extend(ClassMethods)
       @abstract_factory.class_eval(&def_block) if def_block
       @abstract_factory.build_order_list.freeze
-      @initialization = Initialization.new(@abstract_factory.factories.keys)
-      @assembler = Assembler.new(@abstract_factory)
-      @callbacks = callbacks
+      @assembler = Assembler.new(@abstract_factory, callbacks)
     end
 
     def copy
@@ -52,32 +50,22 @@ module Nina
     end
 
     def with_callbacks(&block)
-      c = callbacks&.copy || Callbacks.new(abstract_factory.factories.keys)
+      c = @assembler.callbacks
       yield c if block
 
       self.class.new(name, abstract_factory: abstract_factory, callbacks: c)
     end
 
     def wrap(delegate: false, &block)
-      yield @initialization if block
+      yield @assembler.initialization if block
 
-      @assembler.inject(
-        @abstract_factory.build_order_list,
-        @initialization.to_h,
-        callbacks: callbacks.to_h,
-        delegate: delegate
-      )
+      @assembler.inject(@abstract_factory.build_order_list, delegate: delegate)
     end
 
     def nest(delegate: false, &block)
-      yield @initialization if block
+      yield @assembler.initialization if block
 
-      @assembler.inject(
-        @abstract_factory.build_order_list.reverse,
-        @initialization.to_h,
-        callbacks: callbacks.to_h,
-        delegate: delegate
-      )
+      @assembler.inject(@abstract_factory.build_order_list.reverse, delegate: delegate)
     end
 
     def subclass(&def_block)
@@ -86,8 +74,7 @@ module Nina
       @abstract_factory = Class.new(abstract_factory)
       @abstract_factory.class_eval(&def_block)
       @abstract_factory.build_order_list.freeze
-      @initialization = Initialization.new(@abstract_factory.factories.keys)
-      @assembler = Assembler.new(@abstract_factory)
+      @assembler = Assembler.new(@abstract_factory, @assembler.callbacks)
     end
   end
 end
