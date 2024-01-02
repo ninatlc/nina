@@ -67,8 +67,7 @@ RSpec.describe Nina do
       expect(instance.a).to eq 1
       expect(instance.b).to eq 2
       expect(instance.c).to eq 3
-      expect(predecessors).to eq [instance.query, instance.params]
-      expect(predecessors.object_id).to eq instance.predecessors.object_id
+      expect(predecessors.to_a).to eq [instance.query, instance.params]
       expect(instance.only).to eq :me
       expect(instance.params.call(3)).to eq 6
     end
