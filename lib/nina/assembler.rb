@@ -6,6 +6,8 @@ require 'nina/builder/callbacks'
 module Nina
   # Generates module that adds support for objects creation
   class Assembler
+    include Observable
+
     attr_reader :initialization, :callbacks
 
     def initialize(abstract_factory, callbacks = nil)
@@ -18,6 +20,8 @@ module Nina
       build_order.each.with_index(-1).inject(nil) do |prev, (name, idx)|
         object = create_object(name, initialization)
         setup_relation(object, prev, name, build_order[idx], delegate)
+        changed
+        notify_observers(name, object)
         object
       end
     end

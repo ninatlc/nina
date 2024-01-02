@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require 'nina/builder/initialization'
-require 'nina/builder/callbacks'
-
 # This should be a kind of factory that creates complex objects
 # from simple ones. It should use torirori to create objects.
 # It also enriches objects with some methods that make them more
@@ -43,17 +40,27 @@ module Nina
       @abstract_factory.class_eval(&def_block) if def_block
       @abstract_factory.build_order_list.freeze
       @assembler = Assembler.new(@abstract_factory, callbacks)
+      @assembler.add_observer(self)
+      @observers = []
+    end
+
+    def add_observer(observer)
+      @observers << observer
     end
 
     def copy
-      self.class.new(name, abstract_factory: abstract_factory)
+      new_builder = self.class.new(name, abstract_factory: abstract_factory)
+      @observers.each { |observer| new_builder.add_observer(observer) }
+      new_builder
     end
 
     def with_callbacks(&block)
       c = @assembler.callbacks
       yield c if block
 
-      self.class.new(name, abstract_factory: abstract_factory, callbacks: c)
+      new_builder = self.class.new(name, abstract_factory: abstract_factory, callbacks: c)
+      @observers.each { |observer| new_builder.add_observer(observer) }
+      new_builder
     end
 
     def wrap(delegate: false, &block)
@@ -75,6 +82,12 @@ module Nina
       @abstract_factory.class_eval(&def_block)
       @abstract_factory.build_order_list.freeze
       @assembler = Assembler.new(@abstract_factory, @assembler.callbacks)
+    end
+
+    def update(name, object)
+      @observers.each do |observer|
+        observer.public_send(:"on_#{name}_created", object) if observer.respond_to?(:"on_#{name}_created")
+      end
     end
   end
 end
