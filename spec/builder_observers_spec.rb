@@ -22,7 +22,7 @@ RSpec.describe Nina do
     end
   end
 
-  context 'when has defined observer' do
+  context 'when called with calbacks' do
     it 'allows to Observe the building process' do
       builder = abstract_factory.main_builder
       builder.add_observer(observer)
@@ -36,8 +36,39 @@ RSpec.describe Nina do
       expect(instance.query.params.a).to eq 1
       expect(instance.query.b).to eq 2
       expect(instance.c).to eq 3
-      expect(observer).to have_received(:on_params_created).with(instance.query.params)
-      expect(observer).to have_received(:on_query_created).with(instance.query)
+      expect(observer).to have_received(:on_params_created).with(instance.query.params, :main)
+      expect(observer).to have_received(:on_query_created).with(instance.query, :main)
+    end
+  end
+
+  context 'when called without calbacks' do
+    it 'allows to Observe the building process' do
+      builder = abstract_factory.main_builder
+      builder.add_observer(observer)
+      instance = builder.wrap do |b|
+        b.command(3)
+      end
+      expect(instance.query.params.a).to eq nil
+      expect(instance.query.b).to eq nil
+      expect(instance.c).to eq 3
+      expect(observer).to have_received(:on_params_created).with(instance.query.params, :main)
+      expect(observer).to have_received(:on_query_created).with(instance.query, :main)
+    end
+  end
+
+  context 'when on subclass' do
+    it 'allows to Observe the building process' do
+      abstract_factory.main_builder.subclass { nil }
+      builder = abstract_factory.main_builder
+      builder.add_observer(observer)
+      instance = builder.wrap do |b|
+        b.command(3)
+      end
+      expect(instance.query.params.a).to eq nil
+      expect(instance.query.b).to eq nil
+      expect(instance.c).to eq 3
+      expect(observer).to have_received(:on_params_created).with(instance.query.params, :main)
+      expect(observer).to have_received(:on_query_created).with(instance.query, :main)
     end
   end
 end

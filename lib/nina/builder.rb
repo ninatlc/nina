@@ -79,6 +79,7 @@ module Nina
       @abstract_factory.class_eval(&def_block)
       @abstract_factory.build_order_list.freeze
       @assembler = Assembler.new(@abstract_factory, @assembler.callbacks)
+      @assembler.add_observer(self)
     end
 
     def update(name, object)
