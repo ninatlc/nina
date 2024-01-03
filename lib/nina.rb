@@ -45,13 +45,6 @@ module Nina
     def respond_to_missing?(method_name, _include_private = false)
       public_methods.detect { |m| m == :predecessor } || super
     end
-
-    def predecessors
-      Enumerator.new do |y|
-        obj = self
-        y << obj = obj.predecessor while obj.methods.detect { |m| m == :predecessor }
-      end
-    end
   end
 
   def self.included(receiver)
@@ -61,6 +54,12 @@ module Nina
   def self.def_accessor(accessor, on:, to:, delegate: false)
     on.define_singleton_method(accessor) { to }
     on.define_singleton_method(:predecessor) { to }
+    def on.predecessors
+      Enumerator.new do |y|
+        obj = self
+        y << obj = obj.predecessor while obj.methods.detect { |m| m == :predecessor }
+      end
+    end
     return unless delegate
 
     on.extend(MethodMissingDelegation)
