@@ -83,7 +83,7 @@ module Nina
 
     def update(name, object)
       @observers.each do |observer|
-        observer.public_send(:"on_#{name}_created", object) if observer.respond_to?(:"on_#{name}_created")
+        observer.public_send(:"on_#{name}_created", object, @name) if observer.respond_to?(:"on_#{name}_created")
       end
     end
   end
