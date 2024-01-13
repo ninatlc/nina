@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'nina/builder/initialization'
+require 'nina/builder/callbacks'
 require 'nina/builder/generator'
 
 # This should be a kind of factory that creates complex objects
@@ -41,9 +43,7 @@ module Nina
       @abstract_factory = abstract_factory.include(Toritori).extend(ClassMethods)
       @abstract_factory.class_eval(&def_block) if def_block
       @abstract_factory.build_order_list.freeze
-      @generator = Generator.new(@abstract_factory)
-      @assembler = Assembler.new(@abstract_factory, @generator, callbacks)
-      @assembler.add_observer(self)
+      @generator = Generator.new(@abstract_factory, callbacks)
       @observers = []
     end
 
@@ -52,13 +52,13 @@ module Nina
     end
 
     def copy
-      new_builder = self.class.new(name, abstract_factory: abstract_factory, callbacks: @assembler.callbacks)
+      new_builder = self.class.new(name, abstract_factory: abstract_factory, callbacks: @generator.callbacks)
       @observers.each { |observer| new_builder.add_observer(observer) }
       new_builder
     end
 
     def with_callbacks(&block)
-      yield @assembler.callbacks if block
+      yield @generator.callbacks if block
 
       copy
     end
@@ -66,7 +66,23 @@ module Nina
     def nest(delegate: false, &block)
       yield @generator.initialization if block
 
-      @assembler.inject(@abstract_factory.build_order_list.reverse, delegate: delegate)
+      result = nil
+      @generator.each.inject(nil) do |prev, (name, object)|
+        Nina.def_accessor(name, on: prev, to: object, delegate: delegate) if prev
+        update(name, object)
+        object.tap { |o| result ||= o }
+      end
+      result
+    end
+
+    def wrap(delegate: false, &block)
+      yield @generator.initialization if block
+
+      @generator.each.with_index(-1).inject(nil) do |prev, ((name, object), idx)|
+        Nina.def_accessor(@abstract_factory.build_order_list[idx], on: object, to: prev, delegate: delegate) if prev
+        update(name, object)
+        object
+      end
     end
 
     def subclass(&def_block)
@@ -75,9 +91,7 @@ module Nina
       @abstract_factory = Class.new(abstract_factory)
       @abstract_factory.class_eval(&def_block)
       @abstract_factory.build_order_list.freeze
-      @generator = Generator.new(@abstract_factory)
-      @assembler = Assembler.new(@abstract_factory, @generator, @assembler.callbacks)
-      @assembler.add_observer(self)
+      @generator = Generator.new(@abstract_factory, @generator.callbacks)
     end
 
     def update(name, object)

@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require 'toritori'
-require 'observer'
-require 'nina/assembler'
 require 'nina/builder'
 
 require_relative 'nina/version'
