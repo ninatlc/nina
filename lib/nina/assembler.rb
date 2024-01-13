@@ -2,6 +2,7 @@
 
 require 'nina/builder/initialization'
 require 'nina/builder/callbacks'
+require 'nina/builder/generator'
 
 module Nina
   # Generates module that adds support for objects creation
@@ -10,15 +11,14 @@ module Nina
 
     attr_reader :initialization, :callbacks
 
-    def initialize(abstract_factory, callbacks = nil)
+    def initialize(abstract_factory, generator, callbacks = nil)
       @abstract_factory = abstract_factory
-      @initialization = Builder::Initialization.new(@abstract_factory.build_order_list)
+      @generator = generator
       @callbacks = callbacks&.copy || Builder::Callbacks.new(@abstract_factory.build_order_list)
     end
 
     def inject(build_order, delegate: false)
-      build_order.each.with_index(-1).inject(nil) do |prev, (name, idx)|
-        object = create_object(name, initialization)
+      @generator.each.lazy.with_index(-1).inject(nil) do |prev, ((name, object), idx)|
         setup_relation(object, prev, name, build_order[idx], delegate)
         changed
         notify_observers(name, object)

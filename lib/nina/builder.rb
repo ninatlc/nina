@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'nina/builder/generator'
+
 # This should be a kind of factory that creates complex objects
 # from simple ones. It should use torirori to create objects.
 # It also enriches objects with some methods that make them more
@@ -39,7 +41,8 @@ module Nina
       @abstract_factory = abstract_factory.include(Toritori).extend(ClassMethods)
       @abstract_factory.class_eval(&def_block) if def_block
       @abstract_factory.build_order_list.freeze
-      @assembler = Assembler.new(@abstract_factory, callbacks)
+      @generator = Generator.new(@abstract_factory)
+      @assembler = Assembler.new(@abstract_factory, @generator, callbacks)
       @assembler.add_observer(self)
       @observers = []
     end
@@ -60,14 +63,8 @@ module Nina
       copy
     end
 
-    def wrap(delegate: false, &block)
-      yield @assembler.initialization if block
-
-      @assembler.inject(@abstract_factory.build_order_list, delegate: delegate)
-    end
-
     def nest(delegate: false, &block)
-      yield @assembler.initialization if block
+      yield @generator.initialization if block
 
       @assembler.inject(@abstract_factory.build_order_list.reverse, delegate: delegate)
     end
@@ -78,7 +75,8 @@ module Nina
       @abstract_factory = Class.new(abstract_factory)
       @abstract_factory.class_eval(&def_block)
       @abstract_factory.build_order_list.freeze
-      @assembler = Assembler.new(@abstract_factory, @assembler.callbacks)
+      @generator = Generator.new(@abstract_factory)
+      @assembler = Assembler.new(@abstract_factory, @generator, @assembler.callbacks)
       @assembler.add_observer(self)
     end
 
