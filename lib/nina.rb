@@ -62,12 +62,4 @@ module Nina
 
     on.extend(MethodMissingDelegation)
   end
-
-  def self.linked_list(build_config, delegate: false)
-    build_order = build_config.keys
-    build_config.each.with_index(-1).inject(nil) do |prev, ((_, object), idx)|
-      Nina.def_accessor(build_order[idx], on: object, to: prev, delegate: delegate) if prev
-      object
-    end
-  end
 end

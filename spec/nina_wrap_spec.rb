@@ -50,7 +50,11 @@ RSpec.describe Nina do
   describe 'build using wrapping strategy with delegation' do
     it 'simply creates instances' do
       builder = abstract_factory.main_builder
-      instance = builder.wrap(delegate: true)
+      instance = builder.wrap(delegate: true) do |b|
+        b.params
+        b.query
+        b.command
+      end
       expect(instance).to be_a Command
       expect(instance.query).to be_a Query
       expect(instance.params).to be_a Params
@@ -80,7 +84,11 @@ RSpec.describe Nina do
   describe 'build using nesting strategy without delegation' do
     it 'simply creates instances' do
       builder = abstract_factory.main_builder
-      instance = builder.wrap
+      instance = builder.wrap do |b|
+        b.params
+        b.query
+        b.command
+      end
       expect(instance).to be_a Command
       expect(instance.query).to be_a Query
       expect(instance.query.params).to be_a Params

@@ -58,7 +58,6 @@ RSpec.describe Nina do
     expect(abstract_factory).to respond_to :secondary_builder
     builder = abstract_factory.secondary_builder
     expect(builder).to be_a Nina::Builder
-    expect(builder.abstract_factory.build_order_list).to eq %i[params query command]
     instance = builder.wrap(delegate: true) do |b|
       b.params(1, only: :me) { |v| v * 2 }
       b.query(2)

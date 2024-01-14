@@ -55,15 +55,14 @@ RSpec.describe Nina do
       expect(child_abstract_factory).to respond_to :main_builder
       builder = child_abstract_factory.main_builder
       expect(builder).to be_a Nina::Builder
-      expect(builder.abstract_factory.build_order_list).to eq %i[params query command]
     end
 
     it 'simply creates instances' do
       builder = child_abstract_factory.main_builder
-      expect { builder.nest }.to raise_error ArgumentError
-      expect(builder.abstract_factory.build_order_list).to eq %i[params query command]
       instance = builder.wrap do |b|
         b.params(2, 9)
+        b.query
+        b.command
       end
       expect(instance.query.params.class.superclass.superclass).to eq InheritParams
       expect(instance.query.params.get).to eq 16

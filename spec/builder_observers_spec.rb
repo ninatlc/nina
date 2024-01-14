@@ -31,6 +31,8 @@ RSpec.describe Nina do
         c.query { _1.b = 2 }
       end
       instance = builder_with_callbacks.wrap do |b|
+        b.params
+        b.query
         b.command(3)
       end
       expect(instance.query.params.a).to eq 1
@@ -46,6 +48,8 @@ RSpec.describe Nina do
       builder = abstract_factory.main_builder
       builder.add_observer(observer)
       instance = builder.wrap do |b|
+        b.params
+        b.query
         b.command(3)
       end
       expect(instance.query.params.a).to eq nil
@@ -62,6 +66,8 @@ RSpec.describe Nina do
       builder = abstract_factory.main_builder
       builder.add_observer(observer)
       instance = builder.wrap do |b|
+        b.params
+        b.query
         b.command(3)
       end
       expect(instance.query.params.a).to eq nil

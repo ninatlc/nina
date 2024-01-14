@@ -2,7 +2,6 @@
 
 require 'nina/builder/initialization'
 require 'nina/builder/callbacks'
-require 'nina/builder/generator'
 
 # This should be a kind of factory that creates complex objects
 # from simple ones. It should use torirori to create objects.
@@ -15,21 +14,7 @@ module Nina
 
     # Definaes support methods and variables for concrete builder
     module ClassMethods
-      def build_order_list
-        @build_order_list ||= []
-      end
-
-      def build_order_list=(other)
-        @build_order_list = other.dup.freeze
-      end
-
-      def inherited(subclass)
-        super
-        subclass.build_order_list = build_order_list.dup.freeze
-      end
-
       def factory(name, *args, **kwargs, &block)
-        build_order_list << name
         super
         define_singleton_method(name) do |klass = nil, &definition|
           factories[__method__].subclass(produces: klass, &definition)
@@ -42,8 +27,8 @@ module Nina
       @def_block = def_block
       @abstract_factory = abstract_factory.include(Toritori).extend(ClassMethods)
       @abstract_factory.class_eval(&def_block) if def_block
-      @abstract_factory.build_order_list.freeze
-      @generator = Generator.new(@abstract_factory, callbacks)
+      @initialization = Builder::Initialization.new(@abstract_factory)
+      @callbacks = callbacks&.copy || Callbacks.new(@abstract_factory.factories.keys)
       @observers = []
     end
 
@@ -52,22 +37,22 @@ module Nina
     end
 
     def copy
-      new_builder = self.class.new(name, abstract_factory: abstract_factory, callbacks: @generator.callbacks)
+      new_builder = self.class.new(name, abstract_factory: abstract_factory, callbacks: @callbacks)
       @observers.each { |observer| new_builder.add_observer(observer) }
       new_builder
     end
 
     def with_callbacks(&block)
-      yield @generator.callbacks if block
+      yield @callbacks if block
 
       copy
     end
 
     def nest(delegate: false, &block)
-      yield @generator.initialization if block
+      yield @initialization if block
 
       result = nil
-      @generator.each.inject(nil) do |prev, (name, object)|
+      @initialization.to_h.each.inject(nil) do |prev, (name, object)|
         Nina.def_accessor(name, on: prev, to: object, delegate: delegate) if prev
         update(name, object)
         object.tap { |o| result ||= o }
@@ -76,10 +61,11 @@ module Nina
     end
 
     def wrap(delegate: false, &block)
-      yield @generator.initialization if block
+      yield @initialization if block
 
-      @generator.each.with_index(-1).inject(nil) do |prev, ((name, object), idx)|
-        Nina.def_accessor(@abstract_factory.build_order_list[idx], on: object, to: prev, delegate: delegate) if prev
+      build = @initialization.to_h
+      build.each.with_index(-1).inject(nil) do |prev, ((name, object), idx)|
+        Nina.def_accessor(build.keys[idx], on: object, to: prev, delegate: delegate) if prev
         update(name, object)
         object
       end
@@ -90,11 +76,20 @@ module Nina
 
       @abstract_factory = Class.new(abstract_factory)
       @abstract_factory.class_eval(&def_block)
-      @abstract_factory.build_order_list.freeze
-      @generator = Generator.new(@abstract_factory, @generator.callbacks)
+      @initialization = Builder::Initialization.new(@abstract_factory)
+      @callbacks = callbacks&.copy || Callbacks.new(@abstract_factory.build_order_list)
+    end
+
+    private
+
+    def callbacks_for(name)
+      return [] unless @callbacks
+
+      @callbacks.to_h.fetch(name, [])
     end
 
     def update(name, object)
+      callbacks_for(name).each { |c| c.call(object) }
       @observers.each do |observer|
         observer.public_send(:"on_#{name}_created", object, @name) if observer.respond_to?(:"on_#{name}_created")
       end

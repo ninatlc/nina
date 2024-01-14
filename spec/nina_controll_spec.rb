@@ -27,6 +27,8 @@ RSpec.describe Nina do
         c.query { _1.b = 2 }
       end
       instance = builder_with_callbacks.wrap do |b|
+        b.params
+        b.query
         b.command(3)
       end
       expect(instance.query.params.a).to eq 1
@@ -44,7 +46,11 @@ RSpec.describe Nina do
         c.params { _1.a += 2 }
         c.query { _1.b = 2 }
       end
-      instance = builder_with_callbacks.wrap
+      instance = builder_with_callbacks.wrap do |b|
+        b.params
+        b.query
+        b.command
+      end
       expect(instance.query.params.a).to eq 6
       expect(instance.query.b).to eq 2
       expect(instance.c).to eq nil
@@ -61,7 +67,11 @@ RSpec.describe Nina do
       builder = builder.with_callbacks do |c|
         c.params { copied = _1.a }
       end
-      builder.wrap
+      builder.wrap do |b|
+        b.params
+        b.query
+        b.command
+      end
       expect(copied).to eq(1)
     end
   end

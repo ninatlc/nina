@@ -3,7 +3,12 @@
 module Nina
   class Builder
     # Utility to get user defined callbacks
-    class Callbacks < Initialization
+    class Callbacks
+      def initialize(allow_list, atts = {})
+        @allow_list = allow_list
+        @atts = atts
+      end
+
       def copy
         Callbacks.new(@allow_list, to_h.dup)
       end
@@ -18,6 +23,10 @@ module Nina
 
       def respond_to_missing?(method, include_private = false)
         super
+      end
+
+      def to_h
+        @atts
       end
     end
   end
