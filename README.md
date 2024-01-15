@@ -65,22 +65,41 @@ Lets explore what we have as a result
 ```ruby
 # Wrapping strategy
 builder = abstract_factory.main_builder
-instance = builder.wrap
+instance = builder.wrap do |build|
+  # This block controlls order of building process steps
+  # Allows you to provide initialization attributes
+  # And specify only things you need to be added
+  build.params                  # The most nested object;
+  q = build.query               # query will get a reader to params
+  build.command if i_need_this? # Top level object; command will get a reader to query
+  build.query == q              # memoization do not allow creation of objects multiple times
+  build.query(1, 2, 3)          # instead it returns first object no matter what parameters you provided later
+end
 instance # => #<Command>
 instance.query # => #<Query>
 instance.query.params # => #<Params>
 
 # Nesting strategy
 builder = abstract_factory.secondary_builder
-instance = builder.nest
+instance = builder.nest do |build|
+  build.params  # Top level object
+  build.query   # query will get a reader to params
+  build.command # The most nested object; query will get a reader to command
+end
 instance # => #<A>
 instance.query # => #<B>
 instance.query.command # => #<C>
 ```
-We may apply delegation techique from OOD to hide deeper layers of resulted object
+
+### Delegation
+We may apply delegation techique from OOD to expose methods of deeper layers
 ```ruby
 builder = abstract_factory.secondary_builder
-instance = builder.nest(delegate: true)
+instance = builder.nest(delegate: true) do |build|
+  build.params
+  build.query
+  build.command
+end
 instance.a # => nil
 instance.b # => nil
 instance.c # => nil
@@ -89,6 +108,7 @@ instance.query.c # => nil
 If you need provide an initalization parameters for the objects
 ```ruby
 instance = builder.wrap(delegate: true) do |b|
+  # b.params(1, 2) => ArgumentError
   b.params(1)
   b.query(2)
   b.command(3)
@@ -97,6 +117,21 @@ instance.a # => 1
 instance.b # => 2
 instance.c # => 3
 ```
+
+### Top level API
+If you have some objects and just want to link them you can use following methods
+```ruby
+setup = { params: params, query: query, command: command }
+Nina.link(setup, delegate: true) do |name, object| # => params.query.command
+  # optionally do something
+end
+
+Nina.reverse_link(setup, delegate: false) do |name, object| # => command.query.params
+  # optionally do something
+end
+```
+
+### Callbacks
 To do something between stages (after creation of object)
 ```ruby
 builder_with_callbacks = builder.with_callbacks do |c|
