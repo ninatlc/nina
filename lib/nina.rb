@@ -49,7 +49,7 @@ module Nina
     receiver.extend ClassMethods
   end
 
-  def self.def_accessor(accessor, on:, to:, delegate: false)
+  def self.def_reader(accessor, on:, to:, delegate: false)
     on.define_singleton_method(accessor) { to }
     on.define_singleton_method(:predecessor) { to }
     def on.predecessors
@@ -61,5 +61,23 @@ module Nina
     return unless delegate
 
     on.extend(MethodMissingDelegation)
+  end
+
+  def self.link(build, delegate: false, &block)
+    result = nil
+    build.each.inject(nil) do |prev, (name, object)|
+      Nina.def_reader(name, on: prev, to: object, delegate: delegate) if prev
+      yield(name, object) if block
+      object.tap { |o| result ||= o }
+    end
+    result
+  end
+
+  def self.reverse_link(build, delegate: false, &block)
+    build.each.with_index(-1).inject(nil) do |prev, ((name, object), idx)|
+      Nina.def_reader(build.keys[idx], on: object, to: prev, delegate: delegate) if prev
+      yield(name, object) if block
+      object
+    end
   end
 end

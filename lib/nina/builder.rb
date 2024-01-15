@@ -27,7 +27,7 @@ module Nina
       @def_block = def_block
       @abstract_factory = abstract_factory.include(Toritori).extend(ClassMethods)
       @abstract_factory.class_eval(&def_block) if def_block
-      @initialization = Builder::Initialization.new(@abstract_factory)
+      @initialization = Builder::Initialization.new(self)
       @callbacks = callbacks&.copy || Callbacks.new(@abstract_factory.factories.keys)
       @observers = []
     end
@@ -51,24 +51,13 @@ module Nina
     def nest(delegate: false, &block)
       yield @initialization if block
 
-      result = nil
-      @initialization.to_h.each.inject(nil) do |prev, (name, object)|
-        Nina.def_accessor(name, on: prev, to: object, delegate: delegate) if prev
-        update(name, object)
-        object.tap { |o| result ||= o }
-      end
-      result
+      Nina.link(@initialization.to_h, delegate: delegate)
     end
 
     def wrap(delegate: false, &block)
       yield @initialization if block
 
-      build = @initialization.to_h
-      build.each.with_index(-1).inject(nil) do |prev, ((name, object), idx)|
-        Nina.def_accessor(build.keys[idx], on: object, to: prev, delegate: delegate) if prev
-        update(name, object)
-        object
-      end
+      Nina.reverse_link(@initialization.to_h, delegate: delegate)
     end
 
     def subclass(&def_block)
@@ -76,7 +65,7 @@ module Nina
 
       @abstract_factory = Class.new(abstract_factory)
       @abstract_factory.class_eval(&def_block)
-      @initialization = Builder::Initialization.new(@abstract_factory)
+      @initialization = Builder::Initialization.new(self)
       @callbacks = callbacks&.copy || Callbacks.new(@abstract_factory.build_order_list)
     end
 
