@@ -49,15 +49,17 @@ module Nina
     end
 
     def nest(delegate: false, &block)
-      yield @initialization if block
+      initialization = Builder::Initialization.new(self)
+      yield initialization if block
 
-      Nina.link(@initialization.to_h, delegate: delegate)
+      Nina.link(initialization.to_h, delegate: delegate)
     end
 
     def wrap(delegate: false, &block)
-      yield @initialization if block
+      initialization = Builder::Initialization.new(self)
+      yield initialization if block
 
-      Nina.reverse_link(@initialization.to_h, delegate: delegate)
+      Nina.reverse_link(initialization.to_h, delegate: delegate)
     end
 
     def subclass(&def_block)
@@ -65,7 +67,6 @@ module Nina
 
       @abstract_factory = Class.new(abstract_factory)
       @abstract_factory.class_eval(&def_block)
-      @initialization = Builder::Initialization.new(self)
       @callbacks = callbacks&.copy || Callbacks.new(@abstract_factory.build_order_list)
     end
 

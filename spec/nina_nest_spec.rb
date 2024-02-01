@@ -57,6 +57,17 @@ RSpec.describe Nina do
       expect(instance.command).to eq instance.query.command
     end
 
+    it 'creates new instances every time' do
+      builder = abstract_factory.main_builder
+      instance = builder.nest(delegate: true) do |b|
+        b.params
+        b.query
+        b.command
+      end
+      instance2 = builder.nest(delegate: true, &:params)
+      expect(instance.object_id).to_not eq(instance2.object_id)
+    end
+
     it 'creates instances with custom init' do
       builder = abstract_factory.secondary_builder
       instance = builder.wrap(delegate: true) do |b|
