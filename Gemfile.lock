@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    nina (0.2.0)
+    nina (0.2.1)
       toritori (= 0.2.1)
 
 GEM
