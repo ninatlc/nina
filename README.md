@@ -49,18 +49,10 @@ Each builder has three factories: params, query, and command. Please check https
 
 With this setup we are able to compose objects in two different ways. Taking the definition block as an ordered list we can traverse it `top->bottom` or `bottom->top` connecting objects at each step
 
-Wrapping `top->bottom`
-```mermaid
-graph TD;
-  query-->params;
-  command-->query;
-```
-Nesting `bottom->top`
-```mermaid
-graph TD;
-  query-->command;
-  params-->query;
-```
+Wrapping 
+![](https://github.com/andriy-baran/nina/blob/master/assets/wrap.gif?raw=true)
+Nesting 
+![](https://github.com/andriy-baran/nina/blob/master/assets/nest.gif?raw=true)
 Lets explore what we have as a result
 ```ruby
 # Wrapping strategy
